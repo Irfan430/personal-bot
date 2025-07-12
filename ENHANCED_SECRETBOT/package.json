@@ -1,0 +1,81 @@
+{
+  "name": "enhanced-secretbot",
+  "version": "2.0.0",
+  "description": "An enhanced Facebook Messenger bot with improved security, performance, and modern features",
+  "main": "src/index.js",
+  "type": "module",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "NODE_ENV=development node src/index.js",
+    "prod": "NODE_ENV=production node src/index.js",
+    "test": "jest",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
+    "format": "prettier --write src/",
+    "setup": "node scripts/setup.js",
+    "docker:build": "docker build -t enhanced-secretbot .",
+    "docker:run": "docker run -p 3000:3000 enhanced-secretbot"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "bcryptjs": "^2.4.3",
+    "canvas": "^2.11.2",
+    "chalk": "^5.3.0",
+    "cheerio": "^1.0.0-rc.12",
+    "compression": "^1.7.4",
+    "cors": "^2.8.5",
+    "cron": "^3.1.6",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-rate-limit": "^7.1.5",
+    "express-session": "^1.17.3",
+    "helmet": "^7.1.0",
+    "joi": "^17.11.0",
+    "jsonwebtoken": "^9.0.2",
+    "moment-timezone": "^0.5.43",
+    "mongoose": "^8.0.3",
+    "multer": "^1.4.5-lts.1",
+    "node-cron": "^3.0.3",
+    "nodemailer": "^6.9.7",
+    "openai": "^4.20.1",
+    "redis": "^4.6.11",
+    "socket.io": "^4.7.4",
+    "uuid": "^9.0.1",
+    "validator": "^13.11.0",
+    "winston": "^3.11.0",
+    "ws": "^8.14.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "eslint": "^8.55.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-node": "^11.1.0",
+    "jest": "^29.7.0",
+    "nodemon": "^3.0.2",
+    "prettier": "^3.1.0",
+    "supertest": "^6.3.3"
+  },
+  "keywords": [
+    "facebook",
+    "messenger",
+    "bot",
+    "ai",
+    "chatbot",
+    "automation",
+    "social-media"
+  ],
+  "author": "Enhanced SecretBot Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/enhanced-secretbot/enhanced-secretbot.git"
+  },
+  "bugs": {
+    "url": "https://github.com/enhanced-secretbot/enhanced-secretbot/issues"
+  },
+  "homepage": "https://github.com/enhanced-secretbot/enhanced-secretbot#readme"
+}
