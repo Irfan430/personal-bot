@@ -1,0 +1,179 @@
+version: '3.8'
+
+services:
+  # Enhanced SecretBot Application
+  enhanced-secretbot:
+    build: .
+    container_name: enhanced-secretbot
+    restart: unless-stopped
+    depends_on:
+      - mongodb
+      - redis
+    environment:
+      - NODE_ENV=production
+      - MONGODB_URI=mongodb://mongodb:27017/enhanced_secretbot
+      - REDIS_URL=redis://redis:6379
+      - DASHBOARD_PORT=3000
+      - DASHBOARD_HOST=0.0.0.0
+    env_file:
+      - .env
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./logs:/app/logs
+      - ./config:/app/config
+    networks:
+      - enhanced-secretbot-network
+    healthcheck:
+      test: ["CMD", "node", "scripts/health-check.js"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # MongoDB Database
+  mongodb:
+    image: mongo:6.0
+    container_name: enhanced-secretbot-mongodb
+    restart: unless-stopped
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=secretpassword
+      - MONGO_INITDB_DATABASE=enhanced_secretbot
+    volumes:
+      - mongodb-data:/data/db
+      - ./scripts/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    ports:
+      - "27017:27017"
+    networks:
+      - enhanced-secretbot-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongo mongodb:27017/test --quiet
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: enhanced-secretbot-redis
+    restart: unless-stopped
+    command: redis-server --requirepass secretpassword --appendonly yes
+    volumes:
+      - redis-data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - enhanced-secretbot-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # Nginx Reverse Proxy (Optional)
+  nginx:
+    image: nginx:alpine
+    container_name: enhanced-secretbot-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - enhanced-secretbot
+    networks:
+      - enhanced-secretbot-network
+    profiles:
+      - with-nginx
+
+  # MongoDB Express (Optional - for database management)
+  mongo-express:
+    image: mongo-express:latest
+    container_name: enhanced-secretbot-mongo-express
+    restart: unless-stopped
+    depends_on:
+      - mongodb
+    environment:
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=admin
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=secretpassword
+      - ME_CONFIG_MONGODB_URL=mongodb://admin:secretpassword@mongodb:27017/
+      - ME_CONFIG_BASICAUTH_USERNAME=admin
+      - ME_CONFIG_BASICAUTH_PASSWORD=secretpassword
+    ports:
+      - "8081:8081"
+    networks:
+      - enhanced-secretbot-network
+    profiles:
+      - with-mongo-express
+
+  # Redis Commander (Optional - for Redis management)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: enhanced-secretbot-redis-commander
+    restart: unless-stopped
+    depends_on:
+      - redis
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+      - REDIS_PASSWORD=secretpassword
+    ports:
+      - "8082:8081"
+    networks:
+      - enhanced-secretbot-network
+    profiles:
+      - with-redis-commander
+
+  # Monitoring with Grafana (Optional)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: enhanced-secretbot-grafana
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=secretpassword
+    volumes:
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3001:3000"
+    networks:
+      - enhanced-secretbot-network
+    profiles:
+      - with-monitoring
+
+  # Prometheus for metrics (Optional)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: enhanced-secretbot-prometheus
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - enhanced-secretbot-network
+    profiles:
+      - with-monitoring
+
+networks:
+  enhanced-secretbot-network:
+    driver: bridge
+
+volumes:
+  mongodb-data:
+    driver: local
+  redis-data:
+    driver: local
+  grafana-data:
+    driver: local
+  prometheus-data:
+    driver: local
